@@ -297,4 +297,23 @@ TV_SERIES = {
             "of Seasons 1, 2, 5 and 6."
         ),
     ),
+    "Sherlock": season_series(
+        name="Sherlock",
+        folder_names=[
+            "Sherlock",
+            "Sherlock Holmes",
+        ],
+        expected_by_season={
+            0: set(range(1, 4)),   # especiais
+            1: {1, 2, 3},
+            2: {1, 2, 3},
+            3: {1, 2, 3},
+            4: {1, 2, 3},
+        },
+        enabled=False,
+        note=(
+            "Waiting for a new collection. "
+            "Current files appear to be split episodes."
+        ),
+    ),
 }
