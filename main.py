@@ -1,38 +1,65 @@
-from organizer import organize_dragon_ball
-from organizer import organize_dragon_ball_z
+from organizer import organize_series
+from series import SERIES
 
 
-def main():
+def show_series_menu() -> None:
+    print("\n==== Anime Organizer ====")
 
+    for option, series_data in SERIES.items():
+        print(f"{option}. {series_data['name']}")
+
+    print("0. Back")
+
+
+def anime_menu() -> None:
     while True:
+        show_series_menu()
 
+        option = input("\nSelect an anime: ").strip()
+
+        if option == "0":
+            return
+
+        series_data = SERIES.get(option)
+
+        if series_data is None:
+            print("\nInvalid option.")
+            continue
+
+        path = input(
+            f"\n{series_data['name']} folder: "
+        )
+
+        organize_series(
+            path=path,
+            series_data=series_data,
+        )
+
+
+def main() -> None:
+    while True:
         print("\n==== Media Organizer ====")
-        print("1 - Dragon Ball")
-        print("2 - Dragon Ball Z")
-        print("3 - Exit")
+        print("1. Organize anime")
+        print("2. Organize TV series")
+        print("3. Organize movies")
+        print("4. Exit")
 
-        option = input("\nSelect an option: ")
+        option = input("\nSelect an option: ").strip()
 
         if option == "1":
-
-            path = input("\nDragon Ball folder: ")
-
-            organize_dragon_ball(path)
+            anime_menu()
 
         elif option == "2":
-
-            path = input("\nDragon Ball Z folder: ")
-
-            organize_dragon_ball_z(path)
+            print("\nTV series organizer is not implemented yet.")
 
         elif option == "3":
+            print("\nMovie organizer is not implemented yet.")
 
+        elif option == "4":
             print("\nClosing Media Organizer...")
-
             break
 
         else:
-
             print("\nInvalid option.")
 
 

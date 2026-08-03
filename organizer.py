@@ -3,19 +3,6 @@ import shutil
 from pathlib import Path
 
 
-DBZ_SEASONS = [
-    {"season": 1, "start": 1, "end": 39},
-    {"season": 2, "start": 40, "end": 74},
-    {"season": 3, "start": 75, "end": 107},
-    {"season": 4, "start": 108, "end": 139},
-    {"season": 5, "start": 140, "end": 165},
-    {"season": 6, "start": 166, "end": 194},
-    {"season": 7, "start": 195, "end": 219},
-    {"season": 8, "start": 220, "end": 253},
-    {"season": 9, "start": 254, "end": 291},
-]
-
-
 def prepare_folder(path: str) -> Path | None:
     folder = Path(path.strip().strip('"'))
 
@@ -30,11 +17,123 @@ def prepare_folder(path: str) -> Path | None:
     return folder
 
 
-def apply_changes(
-    folder: Path,
-    planned_changes: list[dict],
-    expected_episodes: set[int],
-) -> None:
+def extract_episode_data(
+    file_path: Path,
+    filename_pattern: str,
+) -> tuple[int, str | None] | None:
+    # Trabalha com o nome sem a extensão.
+    match = re.match(
+        filename_pattern,
+        file_path.stem,
+        re.IGNORECASE,
+    )
+
+    if match is None:
+        return None
+
+    episode_number = int(match.group("episode"))
+
+    groups = match.groupdict()
+    title = groups.get("title")
+
+    if title is not None:
+        title = title.strip()
+
+    return episode_number, title
+
+
+def find_season(
+    absolute_episode: int,
+    seasons: list[dict],
+) -> tuple[int, int] | None:
+    for season_data in seasons:
+        start = season_data["start"]
+        end = season_data["end"]
+
+        if start <= absolute_episode <= end:
+            season_number = season_data["season"]
+            season_episode = absolute_episode - start + 1
+
+            return season_number, season_episode
+
+    return None
+
+
+def build_filename(
+    series_name: str,
+    season_number: int,
+    season_episode: int,
+    absolute_episode: int,
+    extension: str,
+    title: str | None,
+    keep_title: bool,
+) -> str:
+    new_name = (
+        f"{series_name} - "
+        f"S{season_number:02d}E{season_episode:03d} - "
+        f"{absolute_episode:03d}"
+    )
+
+    if keep_title and title:
+        new_name += f" - {title}"
+
+    return new_name + extension.lower()
+
+
+def organize_series(path: str, series_data: dict) -> None:
+    folder = prepare_folder(path)
+
+    if folder is None:
+        return
+
+    planned_changes = []
+    ignored_files = []
+
+    for file_path in folder.iterdir():
+        if not file_path.is_file():
+            continue
+
+        episode_data = extract_episode_data(
+            file_path=file_path,
+            filename_pattern=series_data["filename_pattern"],
+        )
+
+        if episode_data is None:
+            ignored_files.append(file_path.name)
+            continue
+
+        absolute_episode, title = episode_data
+
+        season_result = find_season(
+            absolute_episode=absolute_episode,
+            seasons=series_data["seasons"],
+        )
+
+        if season_result is None:
+            print(f"Episode outside configured range: {file_path.name}")
+            continue
+
+        season_number, season_episode = season_result
+        season_folder = folder / f"Season {season_number:02d}"
+
+        new_filename = build_filename(
+            series_name=series_data["name"],
+            season_number=season_number,
+            season_episode=season_episode,
+            absolute_episode=absolute_episode,
+            extension=file_path.suffix,
+            title=title,
+            keep_title=series_data["keep_title"],
+        )
+
+        planned_changes.append(
+            {
+                "source": file_path,
+                "destination": season_folder / new_filename,
+                "episode": absolute_episode,
+            }
+        )
+
     if not planned_changes:
         print("\nNo compatible episode files were found.")
         return
@@ -44,10 +143,9 @@ def apply_changes(
     print("\n==== Preview ====\n")
 
     for change in planned_changes:
-        source_name = change["source"].name
         destination = change["destination"].relative_to(folder)
 
-        print(source_name)
+        print(change["source"].name)
         print(f"-> {destination}\n")
 
     found_episodes = {
@@ -55,9 +153,16 @@ def apply_changes(
         for change in planned_changes
     }
 
-    missing_episodes = sorted(expected_episodes - found_episodes)
+    expected_episodes = set(
+        range(1, series_data["total_episodes"] + 1)
+    )
 
-    print(f"Compatible files found: {len(planned_changes)}")
+    missing_episodes = sorted(
+        expected_episodes - found_episodes
+    )
+
+    print(f"Compatible files: {len(planned_changes)}")
+    print(f"Ignored files: {len(ignored_files)}")
 
     if missing_episodes:
         missing_text = ", ".join(
@@ -104,156 +209,3 @@ def apply_changes(
     print("\n==== Result ====")
     print(f"Moved files: {moved_files}")
     print(f"Skipped files: {skipped_files}")
-
-
-# --------------------------------------------------
-# Dragon Ball clássico
-# --------------------------------------------------
-
-def extract_dragon_ball_data(
-    filename: str,
-) -> tuple[int, str] | None:
-    pattern = (
-        r"^Dragon Ball\s+S\d+E(\d{3})\s*-\s*(.+)"
-        r"(\.[^.]+)$"
-    )
-
-    match = re.match(pattern, filename, re.IGNORECASE)
-
-    if match is None:
-        return None
-
-    episode_number = int(match.group(1))
-    title = match.group(2).strip()
-
-    return episode_number, title
-
-
-def organize_dragon_ball(path: str) -> None:
-    folder = prepare_folder(path)
-
-    if folder is None:
-        return
-
-    planned_changes = []
-
-    for file_path in folder.iterdir():
-        if not file_path.is_file():
-            continue
-
-        episode_data = extract_dragon_ball_data(file_path.name)
-
-        if episode_data is None:
-            continue
-
-        episode_number, title = episode_data
-
-        if not 1 <= episode_number <= 153:
-            print(f"Episode outside range: {file_path.name}")
-            continue
-
-        season_folder = folder / "Season 01"
-
-        new_filename = (
-            f"Dragon Ball - "
-            f"S01E{episode_number:03d} - "
-            f"{title}"
-            f"{file_path.suffix}"
-        )
-
-        planned_changes.append(
-            {
-                "source": file_path,
-                "destination": season_folder / new_filename,
-                "episode": episode_number,
-            }
-        )
-
-    apply_changes(
-        folder=folder,
-        planned_changes=planned_changes,
-        expected_episodes=set(range(1, 154)),
-    )
-
-
-# --------------------------------------------------
-# Dragon Ball Z
-# --------------------------------------------------
-
-def extract_dbz_episode_number(filename: str) -> int | None:
-    match = re.search(
-        r"DBZ_Episodio\s+(\d{3})",
-        filename,
-        re.IGNORECASE,
-    )
-
-    if match is None:
-        return None
-
-    return int(match.group(1))
-
-
-def find_dbz_season(
-    absolute_episode: int,
-) -> tuple[int, int] | None:
-    for season_data in DBZ_SEASONS:
-        if season_data["start"] <= absolute_episode <= season_data["end"]:
-            season_number = season_data["season"]
-
-            season_episode = (
-                absolute_episode
-                - season_data["start"]
-                + 1
-            )
-
-            return season_number, season_episode
-
-    return None
-
-
-def organize_dragon_ball_z(path: str) -> None:
-    folder = prepare_folder(path)
-
-    if folder is None:
-        return
-
-    planned_changes = []
-
-    for file_path in folder.iterdir():
-        if not file_path.is_file():
-            continue
-
-        absolute_episode = extract_dbz_episode_number(file_path.name)
-
-        if absolute_episode is None:
-            continue
-
-        season_data = find_dbz_season(absolute_episode)
-
-        if season_data is None:
-            print(f"Episode outside range: {file_path.name}")
-            continue
-
-        season_number, season_episode = season_data
-        season_folder = folder / f"Season {season_number:02d}"
-
-        new_filename = (
-            f"Dragon Ball Z - "
-            f"S{season_number:02d}E{season_episode:02d} - "
-            f"{absolute_episode:03d}"
-            f"{file_path.suffix}"
-        )
-
-        planned_changes.append(
-            {
-                "source": file_path,
-                "destination": season_folder / new_filename,
-                "episode": absolute_episode,
-            }
-        )
-
-    apply_changes(
-        folder=folder,
-        planned_changes=planned_changes,
-        expected_episodes=set(range(1, 292)),
-    )
