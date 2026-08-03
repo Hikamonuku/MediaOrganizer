@@ -328,4 +328,99 @@ SERIES = {
             1: set(range(1, 13)),
         },
     ),
+        "Oniichan wa Oshima": season_series(
+        name="Oniichan wa Oshima",
+        folder_names=[
+            "Oniichan wa Oshima",
+        ],
+        expected_by_season={
+            1: set(range(1, 13)),
+        },
+    ),
+
+    "Sakura Card Captor": season_series(
+        name="Sakura Card Captor",
+        folder_names=[
+            "Sakura Card Captor",
+            "Cardcaptor Sakura",
+        ],
+        expected_by_season={
+            1: set(range(1, 71)),
+        },
+    ),
+
+    "Samurai Champloo": season_series(
+        name="Samurai Champloo",
+        folder_names=[
+            "Samurai Champloo",
+        ],
+        expected_by_season={
+            1: set(range(1, 25)),
+        },
+    ),
+
+    "Seishun Buta Yarou wa Bunny Girl Senpai no Yume wo Minai":
+        season_series(
+            name=(
+                "Seishun Buta Yarou wa "
+                "Bunny Girl Senpai no Yume wo Minai"
+            ),
+            folder_names=[
+                (
+                    "Seishun Buta Yarou wa "
+                    "Bunny Girl Senpai no Yume wo Minai"
+                ),
+            ],
+
+            # Não definimos um total esperado por enquanto.
+            # A pasta contém somente E01, E02 e E04.
+            expected_by_season=None,
+
+            note=(
+                "Current collection contains "
+                "S01E01, S01E02 and S01E04."
+            ),
+        ),
+
+    "Tatte no Yuusha no Nariagari": season_series(
+        name="Tatte no Yuusha no Nariagari",
+        folder_names=[
+            "Tatte no Yuusha no Nariagari",
+        ],
+        expected_by_season={
+            1: set(range(1, 26)),
+            2: set(range(1, 14)),
+            3: set(range(1, 13)),
+            4: set(range(1, 13)),
+        },
+    ),
+
+    "Trigun": season_series(
+        name="Trigun",
+        folder_names=[
+            "Trigun",
+        ],
+        expected_by_season={
+            1: set(range(1, 27)),
+        },
+
+        # Trigun usa "Trigun Dublado 01",
+        # sem S01E01 no nome original.
+        filename_patterns=[
+            (
+                r"^Trigun\s+Dublado\s+"
+                r"(?P<start>\d{1,2})$"
+            ),
+        ],
+    ),
+
+    "Tsurezure Children": season_series(
+        name="Tsurezure Children",
+        folder_names=[
+            "Tsurezure Children",
+        ],
+        expected_by_season={
+            1: set(range(1, 13)),
+        },
+    ),
 }
