@@ -43,7 +43,6 @@ def get_headers() -> dict[str, str]:
         "Accept": "application/json",
     }
 
-
 def search_tv_series(
     query: str,
     language: str = "pt-BR",
