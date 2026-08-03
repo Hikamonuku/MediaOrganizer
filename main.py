@@ -1,36 +1,38 @@
 from organizer import organize_series
-from scanner import scan_anime_library
-from series import SERIES
+from scanner import scan_library
+
+from Media.anime import ANIME
+from Media.cartoons import CARTOONS
+from Media.movies import MOVIES
+from Media.tv_series import TV_SERIES
 
 
-def get_sorted_series() -> list[dict]:
-    return sorted(
-        SERIES.values(),
+def build_menu(
+    media_database: dict,
+) -> dict[str, dict]:
+    menu_options = {}
+
+    sorted_media = sorted(
+        media_database.values(),
         key=lambda item: item["name"].casefold(),
     )
 
-
-def show_series_menu() -> dict[str, dict]:
-    print("\n==== Anime Organizer ====")
-
-    menu_options = {}
-
-    for index, series_data in enumerate(
-        get_sorted_series(),
+    for index, media_data in enumerate(
+        sorted_media,
         start=1,
     ):
         option = str(index)
-        menu_options[option] = series_data
+        menu_options[option] = media_data
 
         marker = (
             ""
-            if series_data.get("enabled", True)
+            if media_data.get("enabled", True)
             else " [manual review]"
         )
 
         print(
             f"{option}. "
-            f"{series_data['name']}"
+            f"{media_data['name']}"
             f"{marker}"
         )
 
@@ -39,152 +41,107 @@ def show_series_menu() -> dict[str, dict]:
     return menu_options
 
 
-def organize_one_anime() -> None:
+def organize_one(
+    media_database: dict,
+    title: str,
+) -> None:
     while True:
-        menu_options = show_series_menu()
+        print(f"\n==== {title} Organizer ====")
+
+        menu_options = build_menu(
+            media_database
+        )
 
         option = input(
-            "\nSelect an anime: "
+            "\nSelect an item: "
         ).strip()
 
         if option == "0":
             return
 
-        series_data = menu_options.get(option)
+        media_data = menu_options.get(option)
 
-        if series_data is None:
+        if media_data is None:
             print("\nInvalid option.")
             continue
 
         path = input(
-            f"\n{series_data['name']} folder: "
+            f"\n{media_data['name']} folder: "
         )
 
         organize_series(
             path=path,
-            series_data=series_data,
+            series_data=media_data,
         )
 
 
-def scan_library() -> None:
+def scan_media_library(
+    media_database: dict,
+    library_name: str,
+) -> None:
     path = input(
-        "\nAnime library folder: "
+        f"\n{library_name} folder: "
     )
 
-    scan_anime_library(
+    scan_library(
         path=path,
-        series_database=SERIES,
+        media_database=media_database,
+        library_name=library_name,
     )
-
-
-def organize_supported_library() -> None:
-    path = input(
-        "\nAnime library folder: "
-    )
-
-    report = scan_anime_library(
-        path=path,
-        series_database=SERIES,
-    )
-
-    if report is None:
-        return
-
-    supported = report["supported"]
-
-    if not supported:
-        print("\nNo supported anime found.")
-        return
-
-    print(
-        "\nThe program will process only "
-        "supported and enabled anime."
-    )
-
-    confirmation = input(
-        "Continue? (yes/no): "
-    ).strip().lower()
-
-    if confirmation not in {"yes", "y"}:
-        print("\nOperation cancelled.")
-        return
-
-    results = []
-
-    for item in supported:
-        anime_folder = item["folder"]
-        series_data = item["series"]
-
-        print(
-            "\n\n================================"
-        )
-        print(series_data["name"])
-        print(
-            "================================"
-        )
-
-        result = organize_series(
-            path=str(anime_folder),
-            series_data=series_data,
-            ask_confirmation=False,
-        )
-
-        results.append(
-            {
-                "name": series_data["name"],
-                "result": result,
-            }
-        )
-
-    print("\n==== Final Library Report ====\n")
-
-    for item in results:
-        status = item["result"].get(
-            "status",
-            "unknown",
-        )
-
-        print(
-            f"{item['name']}: {status}"
-        )
 
 
 def main() -> None:
     while True:
         print("\n==== Media Organizer ====")
-        print("1. Organize one anime")
-        print("2. Scan anime library")
-        print("3. Organize supported anime library")
-        print("4. Organize TV series")
-        print("5. Organize movies")
-        print("6. Exit")
+        print("1. Anime")
+        print("2. Cartoons")
+        print("3. TV series")
+        print("4. Movies")
+        print("5. Scan anime library")
+        print("6. Scan cartoon library")
+        print("7. Exit")
 
         option = input(
             "\nSelect an option: "
         ).strip()
 
         if option == "1":
-            organize_one_anime()
+            organize_one(
+                media_database=ANIME,
+                title="Anime",
+            )
 
         elif option == "2":
-            scan_library()
+            organize_one(
+                media_database=CARTOONS,
+                title="Cartoon",
+            )
 
         elif option == "3":
-            organize_supported_library()
+            organize_one(
+                media_database=TV_SERIES,
+                title="TV Series",
+            )
 
         elif option == "4":
             print(
-                "\nTV series organizer "
+                "\nMovie organization "
                 "is not implemented yet."
             )
 
         elif option == "5":
-            print(
-                "\nMovie organizer "
-                "is not implemented yet."
+            scan_media_library(
+                media_database=ANIME,
+                library_name="Anime library",
             )
 
         elif option == "6":
+            scan_media_library(
+                media_database=CARTOONS,
+                library_name="Cartoon library",
+            )
+
+        elif option == "7":
             print(
                 "\nClosing Media Organizer..."
             )
