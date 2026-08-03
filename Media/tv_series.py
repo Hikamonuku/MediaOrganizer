@@ -220,21 +220,6 @@ TV_SERIES = {
         ),
     ),
 
-    "Sherlock": season_series(
-        name="Sherlock",
-        folder_names=[
-            "Sherlock",
-            "Sherlock Holmes",
-        ],
-        expected_by_season=None,
-        keep_title=True,
-        enabled=False,
-        note=(
-            "The files do not match the normal three-episode "
-            "season structure and need manual identification."
-        ),
-    ),
-
     "The Big Bang Theory": season_series(
         name="The Big Bang Theory",
         folder_names=[
@@ -304,16 +289,32 @@ TV_SERIES = {
             "Sherlock Holmes",
         ],
         expected_by_season={
-            0: set(range(1, 4)),   # especiais
             1: {1, 2, 3},
             2: {1, 2, 3},
             3: {1, 2, 3},
             4: {1, 2, 3},
         },
-        enabled=False,
+        keep_title=False,
+        filename_patterns=[
+            # Sherlock.S01E01.720p.HDTV...
+            (
+                r"^Sherlock[.\s_-]*"
+                r"S(?P<season>\d{1,2})"
+                r"E(?P<start>\d{1,2})"
+                r".*$"
+            ),
+            # Sherlock.03x01
+            (
+                r"^Sherlock[.\s_-]*"
+                r"(?P<season>\d{1,2})"
+                r"x(?P<start>\d{1,2})"
+                r".*$"
+            ),
+        ],
+        enabled=True,
         note=(
-            "Waiting for a new collection. "
-            "Current files appear to be split episodes."
+            "Four seasons with three episodes each. "
+            "Specials are not currently included."
         ),
     ),
 }

@@ -9,7 +9,6 @@ from Media.cartoons import CARTOONS
 from Media.movies import MOVIES
 from Media.tv_series import TV_SERIES
 
-
 MEDIA_TYPES = {
     "1": {
         "name": "Anime",
@@ -32,7 +31,6 @@ MEDIA_TYPES = {
         "database": MOVIES,
     },
 }
-
 
 def build_media_item_menu(
     media_database: dict,
@@ -317,26 +315,20 @@ def video_menu() -> None:
         print("3. TV Series")
         print("4. Movies")
         print("0. Back")
-
         option = input(
             "\nSelect a video category: "
         ).strip()
-
         if option == "0":
             return
-
         selected = MEDIA_TYPES.get(option)
-
         if selected is None:
             print("\nInvalid option.")
             continue
-
         video_category_menu(
             media_name=selected["name"],
             library_name=selected["library_name"],
             media_database=selected["database"],
         )
-
 
 def audio_menu() -> None:
     """

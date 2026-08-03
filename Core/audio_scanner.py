@@ -1,9 +1,8 @@
-import re
 from collections import Counter
 from pathlib import Path
 
 
-AUDIOBOOK_EXTENSIONS = {
+AUDIO_EXTENSIONS = {
     ".mp3",
     ".wav",
     ".flac",
@@ -12,101 +11,51 @@ AUDIOBOOK_EXTENSIONS = {
     ".ogg",
     ".opus",
     ".wma",
+    ".mid",
+    ".midi",
 }
 
 
-def extract_chapter_number(file_path: Path) -> int | None:
-    """
-    Reconhece nomes como:
+def prepare_audio_folder(path: str) -> Path | None:
+    folder = Path(path.strip().strip('"'))
 
-    01 - Introdução.mp3
-    02 Produções e Salários.wav
-    Capítulo 01.mp3
-    Parte 03.mp3
-    """
+    if not folder.exists():
+        print("\nAudio library not found.")
+        return None
 
-    patterns = [
-        r"^(?P<number>\d{1,3})\b",
-        r"^cap[ií]tulo\s+(?P<number>\d{1,3})\b",
-        r"^parte\s+(?P<number>\d{1,3})\b",
+    if not folder.is_dir():
+        print("\nThe provided path is not a folder.")
+        return None
+
+    return folder
+
+
+def scan_audio_category(folder: Path) -> dict:
+    audio_files = [
+        file_path
+        for file_path in folder.rglob("*")
+        if (
+            file_path.is_file()
+            and file_path.suffix.lower()
+            in AUDIO_EXTENSIONS
+        )
     ]
 
-    filename = file_path.stem.strip()
+    direct_subfolders = [
+        item
+        for item in folder.iterdir()
+        if item.is_dir()
+    ]
 
-    for pattern in patterns:
-        match = re.match(
-            pattern,
-            filename,
-            re.IGNORECASE,
+    loose_audio_files = [
+        file_path
+        for file_path in folder.iterdir()
+        if (
+            file_path.is_file()
+            and file_path.suffix.lower()
+            in AUDIO_EXTENSIONS
         )
-
-        if match:
-            return int(match.group("number"))
-
-    return None
-
-
-def find_missing_numbers(
-    numbers: list[int],
-) -> list[int]:
-    if not numbers:
-        return []
-
-    unique_numbers = sorted(set(numbers))
-
-    expected = set(
-        range(
-            unique_numbers[0],
-            unique_numbers[-1] + 1,
-        )
-    )
-
-    return sorted(
-        expected - set(unique_numbers)
-    )
-
-
-def scan_book(book_folder: Path) -> dict:
-    audio_files = sorted(
-        [
-            file_path
-            for file_path in book_folder.rglob("*")
-            if (
-                file_path.is_file()
-                and file_path.suffix.lower()
-                in AUDIOBOOK_EXTENSIONS
-            )
-        ],
-        key=lambda item: item.name.casefold(),
-    )
-
-    numbered_files = []
-    unnumbered_files = []
-    chapter_numbers = []
-
-    for file_path in audio_files:
-        chapter_number = extract_chapter_number(
-            file_path
-        )
-
-        if chapter_number is None:
-            unnumbered_files.append(file_path)
-        else:
-            numbered_files.append(file_path)
-            chapter_numbers.append(chapter_number)
-
-    number_occurrences = Counter(chapter_numbers)
-
-    duplicate_numbers = {
-        number: amount
-        for number, amount
-        in number_occurrences.items()
-        if amount > 1
-    }
-
-    missing_numbers = find_missing_numbers(
-        chapter_numbers
-    )
+    ]
 
     extensions = Counter(
         file_path.suffix.lower()
@@ -114,34 +63,23 @@ def scan_book(book_folder: Path) -> dict:
     )
 
     return {
-        "folder": book_folder,
-        "audio_files": audio_files,
-        "numbered_files": numbered_files,
-        "unnumbered_files": unnumbered_files,
-        "missing_numbers": missing_numbers,
-        "duplicate_numbers": duplicate_numbers,
+        "folder": folder,
+        "subfolders": len(direct_subfolders),
+        "audio_files": len(audio_files),
+        "loose_audio_files": len(loose_audio_files),
         "extensions": dict(
             sorted(extensions.items())
         ),
     }
 
 
-def scan_audiobook_library(
-    path: str,
-) -> dict | None:
-    library = Path(
-        path.strip().strip('"')
-    )
+def scan_audio_library(path: str) -> dict | None:
+    library = prepare_audio_folder(path)
 
-    if not library.exists():
-        print("\nAudiobook library not found.")
+    if library is None:
         return None
 
-    if not library.is_dir():
-        print("\nThe provided path is not a folder.")
-        return None
-
-    authors = sorted(
+    category_folders = sorted(
         [
             item
             for item in library.iterdir()
@@ -150,154 +88,49 @@ def scan_audiobook_library(
         key=lambda item: item.name.casefold(),
     )
 
-    books = []
+    categories = [
+        scan_audio_category(folder)
+        for folder in category_folders
+    ]
 
-    for author_folder in authors:
-        book_folders = [
-            item
-            for item in author_folder.iterdir()
-            if item.is_dir()
-        ]
+    print("\n==== Audio Library Report ====\n")
 
-        # Caso o autor tenha os áudios diretamente na pasta.
-        direct_audio_files = [
-            item
-            for item in author_folder.iterdir()
-            if (
-                item.is_file()
-                and item.suffix.lower()
-                in AUDIOBOOK_EXTENSIONS
-            )
-        ]
+    total_files = 0
 
-        if direct_audio_files:
-            books.append(
-                {
-                    "author": author_folder.name,
-                    "analysis": scan_book(
-                        author_folder
-                    ),
-                }
-            )
+    for category in categories:
+        total_files += category["audio_files"]
 
-        for book_folder in sorted(
-            book_folders,
-            key=lambda item: item.name.casefold(),
-        ):
-            books.append(
-                {
-                    "author": author_folder.name,
-                    "analysis": scan_book(
-                        book_folder
-                    ),
-                }
-            )
-
-    print(
-        "\n==== Audiobook Library Report ====\n"
-    )
-
-    total_audio_files = 0
-    books_with_missing = 0
-    books_with_duplicates = 0
-    books_with_unnumbered = 0
-
-    for item in books:
-        author = item["author"]
-        analysis = item["analysis"]
-
-        total_audio_files += len(
-            analysis["audio_files"]
-        )
-
-        if analysis["missing_numbers"]:
-            books_with_missing += 1
-
-        if analysis["duplicate_numbers"]:
-            books_with_duplicates += 1
-
-        if analysis["unnumbered_files"]:
-            books_with_unnumbered += 1
-
-        print(f"Author: {author}")
+        print(category["folder"].name)
         print(
-            f"Book: {analysis['folder'].name}"
+            f"  Subfolders: "
+            f"{category['subfolders']}"
         )
         print(
-            "  Audio files: "
-            f"{len(analysis['audio_files'])}"
+            f"  Audio files: "
+            f"{category['audio_files']}"
         )
         print(
-            "  Numbered chapters: "
-            f"{len(analysis['numbered_files'])}"
-        )
-        print(
-            "  Unnumbered files: "
-            f"{len(analysis['unnumbered_files'])}"
+            "  Loose audio files: "
+            f"{category['loose_audio_files']}"
         )
 
-        if analysis["missing_numbers"]:
-            missing_text = ", ".join(
-                f"{number:02d}"
-                for number
-                in analysis["missing_numbers"]
-            )
-
-            print(
-                f"  Missing numbers: "
-                f"{missing_text}"
-            )
-
-        if analysis["duplicate_numbers"]:
-            duplicate_text = ", ".join(
-                (
-                    f"{number:02d} "
-                    f"({amount} files)"
-                )
-                for number, amount
-                in analysis[
-                    "duplicate_numbers"
-                ].items()
-            )
-
-            print(
-                f"  Duplicate numbers: "
-                f"{duplicate_text}"
-            )
-
-        if analysis["extensions"]:
-            formats = ", ".join(
+        if category["extensions"]:
+            extension_text = ", ".join(
                 f"{extension}: {amount}"
                 for extension, amount
-                in analysis[
-                    "extensions"
-                ].items()
+                in category["extensions"].items()
             )
 
-            print(f"  Formats: {formats}")
+            print(f"  Formats: {extension_text}")
 
         print()
 
     print("==== Summary ====")
-    print(f"Authors: {len(authors)}")
-    print(f"Books: {len(books)}")
-    print(f"Audio files: {total_audio_files}")
-    print(
-        "Books with missing numbers: "
-        f"{books_with_missing}"
-    )
-    print(
-        "Books with duplicate numbers: "
-        f"{books_with_duplicates}"
-    )
-    print(
-        "Books with unnumbered files: "
-        f"{books_with_unnumbered}"
-    )
+    print(f"Categories: {len(categories)}")
+    print(f"Audio files: {total_files}")
 
     return {
         "library": library,
-        "authors": authors,
-        "books": books,
-        "total_audio_files": total_audio_files,
+        "categories": categories,
+        "total_files": total_files,
     }
