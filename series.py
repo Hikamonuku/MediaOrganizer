@@ -3,7 +3,7 @@ SERIES = {
         "name": "Dragon Ball",
         "total_episodes": 153,
         "filename_pattern": (
-            r"^Dragon Ball\s+S\d+E(?P<episode>\d{3})"
+            r"^Dragon Ball\s*-\s*S\d+E(?P<episode>\d{3})"
             r"\s*-\s*(?P<title>.+)$"
         ),
         "seasons": [
@@ -11,7 +11,6 @@ SERIES = {
         ],
         "keep_title": True,
     },
-
     "2": {
         "name": "Dragon Ball Z",
         "total_episodes": 291,
