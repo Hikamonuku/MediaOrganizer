@@ -1,5 +1,6 @@
 VIDEO_EXTENSIONS = {
     ".avi",
+    ".divx",
     ".mkv",
     ".mp4",
     ".m4v",
