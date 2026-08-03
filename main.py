@@ -29,10 +29,12 @@ def anime_menu() -> None:
         path = input(
             f"\n{series_data['name']} folder: "
         )
+
         organize_series(
             path=path,
             series_data=series_data,
         )
+
 
 def main() -> None:
     while True:
@@ -41,18 +43,25 @@ def main() -> None:
         print("2. Organize TV series")
         print("3. Organize movies")
         print("4. Exit")
+
         option = input("\nSelect an option: ").strip()
+
         if option == "1":
             anime_menu()
+
         elif option == "2":
             print("\nTV series organizer is not implemented yet.")
+
         elif option == "3":
             print("\nMovie organizer is not implemented yet.")
+
         elif option == "4":
             print("\nClosing Media Organizer...")
             break
+
         else:
             print("\nInvalid option.")
+
 
 if __name__ == "__main__":
     main()
