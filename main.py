@@ -1,13 +1,39 @@
-from organizer import organize_dbz
+from organizer import organize_dragon_ball
+from organizer import organize_dragon_ball_z
 
 
 def main():
 
-    print("==== Media Organizer ====\n")
+    while True:
 
-    path = input("Dragon Ball Z folder: ")
+        print("\n==== Media Organizer ====")
+        print("1 - Dragon Ball")
+        print("2 - Dragon Ball Z")
+        print("3 - Exit")
 
-    organize_dbz(path)
+        option = input("\nSelect an option: ")
+
+        if option == "1":
+
+            path = input("\nDragon Ball folder: ")
+
+            organize_dragon_ball(path)
+
+        elif option == "2":
+
+            path = input("\nDragon Ball Z folder: ")
+
+            organize_dragon_ball_z(path)
+
+        elif option == "3":
+
+            print("\nClosing Media Organizer...")
+
+            break
+
+        else:
+
+            print("\nInvalid option.")
 
 
 if __name__ == "__main__":
