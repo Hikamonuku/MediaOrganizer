@@ -10,10 +10,6 @@ VIDEO_EXTENSIONS = {
 
 
 FILENAME_PATTERNS = {
-    # Exemplo:
-    # Death Note - S01E01 - Rebirth
-    # Dr. Stone S01E01
-    # Kekkon Surutte Hontou Desu Ka S1E1
     "season_episode": (
         r"^.*?"
         r"S(?P<season>\d{1,2})"
@@ -22,36 +18,65 @@ FILENAME_PATTERNS = {
         r"(?:\s*-\s*(?P<title>.+))?$"
     ),
 
-    # Exemplo:
-    # Hunter X Hunter 001
-    # Ergo Proxy 023
     "absolute_episode": (
         r"^.*?\s+(?P<start>\d{1,3})$"
     ),
-
-    # Formato antigo do Dragon Ball Z.
-    "dbz_old": (
-        r"^DBZ_Episodio\s+"
-        r"(?P<start>\d{3})"
-    ),
-
-    # Formato já organizado do Dragon Ball Z.
-    "dbz_organized": (
-        r"^Dragon Ball Z\s*-\s*"
-        r"S(?P<season>\d{1,2})"
-        r"E(?P<season_episode>\d{1,3})"
-        r"\s*-\s*(?P<start>\d{3})"
-    ),
-
-    # Padrões antigos encontrados em Bleach.
-    "bleach_epi": (
-        r"^.*?Epi[_\s.-]*"
-        r"(?P<start>\d{1,3})"
-        r"(?:[_-](?P<end>\d{1,3}))?$"
-    ),
-
-    "bleach_simple": (
-        r"^Bleach\s*-\s*"
-        r"(?P<start>\d{1,3})$"
-    ),
 }
+
+
+def season_series(
+    name: str,
+    folder_names: list[str],
+    expected_by_season: dict[int, set[int]] | None = None,
+    keep_title: bool = False,
+    filename_patterns: list[str] | None = None,
+    enabled: bool = True,
+    note: str = "",
+) -> dict:
+    return {
+        "name": name,
+        "folder_names": folder_names,
+        "numbering_mode": "season",
+        "filename_patterns": (
+            filename_patterns
+            if filename_patterns is not None
+            else [FILENAME_PATTERNS["season_episode"]]
+        ),
+        "expected_by_season": expected_by_season,
+        "keep_title": keep_title,
+        "keep_absolute_number": False,
+        "episode_digits": 2,
+        "enabled": enabled,
+        "note": note,
+    }
+
+
+def absolute_series(
+    name: str,
+    folder_names: list[str],
+    total_episodes: int | None,
+    seasons: list[dict],
+    filename_patterns: list[str] | None = None,
+    keep_title: bool = False,
+    keep_absolute_number: bool = False,
+    episode_digits: int = 3,
+    enabled: bool = True,
+    note: str = "",
+) -> dict:
+    return {
+        "name": name,
+        "folder_names": folder_names,
+        "numbering_mode": "absolute",
+        "filename_patterns": (
+            filename_patterns
+            if filename_patterns is not None
+            else [FILENAME_PATTERNS["absolute_episode"]]
+        ),
+        "total_episodes": total_episodes,
+        "seasons": seasons,
+        "keep_title": keep_title,
+        "keep_absolute_number": keep_absolute_number,
+        "episode_digits": episode_digits,
+        "enabled": enabled,
+        "note": note,
+    }
