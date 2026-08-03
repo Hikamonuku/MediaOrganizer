@@ -1,5 +1,18 @@
 SERIES = {
     "1": {
+        "name": "Another",
+        "total_episodes": 12,
+        "filename_pattern": (
+            r"^Another\s+S(?P<season>\d+)E(?P<episode>\d+)"
+            r"(?:\s*-\s*(?P<title>.+))?$"
+        ),
+        "seasons": [
+            {"season": 1, "start": 1, "end": 12},
+        ],
+        "keep_title": True,
+        "keep_absolute_number": False,
+    },
+    "2": {
         "name": "Dragon Ball",
         "total_episodes": 153,
         "filename_pattern": (
@@ -10,8 +23,9 @@ SERIES = {
             {"season": 1, "start": 1, "end": 153},
         ],
         "keep_title": True,
+        "keep_absolute_number": False,
     },
-    "2": {
+    "3": {
         "name": "Dragon Ball Z",
         "total_episodes": 291,
         "filename_pattern": (
@@ -29,5 +43,18 @@ SERIES = {
             {"season": 9, "start": 254, "end": 291},
         ],
         "keep_title": False,
+        "keep_absolute_number": True,
+    },
+    "4": {
+        "name": "Hunter x Hunter",
+        "total_episodes": 148,
+        "filename_pattern": (
+            r"^Hunter\s+X\s+Hunter\s+(?P<episode>\d{3})$"
+        ),
+        "seasons": [
+            {"season": 1, "start": 1, "end": 148},
+        ],
+        "keep_title": False,
+        "keep_absolute_number": False,
     },
 }
